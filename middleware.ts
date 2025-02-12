@@ -11,12 +11,13 @@ export default withAuth(
     {
         callbacks : {
             authorized : ({token, req}) => {
-                console.log("Here is the req in middleware",req);
+                // console.log("Here is the req in middleware",req);
                 const {pathname} = req.nextUrl;
-
+                console.log("pathname in req", pathname)
                 //allow auth related routes
                 if(
                     pathname.startsWith("/api/auth") ||
+                    pathname.includes(".svg") ||
                     pathname === "/login" ||
                     pathname === "/register"
                 ){
