@@ -1,9 +1,10 @@
-"use clinet"
+"use client";
 
 import { ImageKitProvider } from "imagekitio-next";
 import { SessionProvider } from "next-auth/react";
 
 import React from "react";
+import { NotificationProvider } from "./Notification";
 
 const urlEndpoint = process.env.NEXT_PUBLIC_URL_ENDPOINT;
 const publicKey = process.env.NEXT_PUBLIC_PUBLIC_KEY;
@@ -14,7 +15,9 @@ const authenticator = async () => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Request failed with status ${response.status}: ${errorText}`);
+      throw new Error(
+        `Request failed with status ${response.status}: ${errorText}`
+      );
     }
 
     const data = await response.json();
@@ -26,12 +29,18 @@ const authenticator = async () => {
   }
 };
 
-export default function Providers(props : {children : React.ReactNode}) {
+export default function Providers(props: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <ImageKitProvider urlEndpoint={urlEndpoint} publicKey={publicKey} authenticator={authenticator}>
-        {props.children}
-      </ImageKitProvider>
+      <NotificationProvider>
+        <ImageKitProvider
+          urlEndpoint={urlEndpoint}
+          publicKey={publicKey}
+          authenticator={authenticator}
+        >
+          {props.children}
+        </ImageKitProvider>
+      </NotificationProvider>
     </SessionProvider>
   );
 }

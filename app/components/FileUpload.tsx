@@ -5,9 +5,6 @@ import { IKUpload } from "imagekitio-next";
 import { IKUploadResponse } from "imagekitio-next/dist/types/components/IKUpload/props";
 import { Loader2 } from "lucide-react";
 
-const [uploading, setUploading] = useState(false);
-const [error, setError] = useState<string | null>(null);
-
 export interface IFileUploadOptions {
   //onSuccess and onProgress is for returning the response to the state
   onSuccess: (res: IKUploadResponse) => void;
@@ -20,10 +17,12 @@ export default function FileUpload({
   onProgress,
   fileType = "image",
 }: IFileUploadOptions) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const handleError = (err: { message: string }) => {
     console.log("Error", err);
     setUploading(false);
-    setError(null);
+    setError(err.message);
   };
 
   const handleSuccess = (res: IKUploadResponse) => {
@@ -39,33 +38,33 @@ export default function FileUpload({
   };
 
   const handleProgress = (evt: ProgressEvent) => {
-    console.log("uploading starte", evt);
+    if (evt.lengthComputable && onProgress) {
+      const percentComplete = (evt.loaded / evt.total) * 100;
+      onProgress(Math.round(percentComplete));
+    }
   };
 
   //function to validate all the required check for file uploads
   const validateFile = (file: File) => {
     if (fileType === "video") {
-      if (!file.type.startsWith("/video")) {
+      console.log(file.type);
+      if (!file.type.startsWith("video/")) {
         setError("Please Upload video format");
-        setUploading(false);
         return false;
       }
-      if (file.size > 200 * 1024 * 1024) {
+      if (file.size > 100 * 1024 * 1024) {
         setError("Please upload video size less than 200 MB");
-        setUploading(false);
         return false;
       }
     } else {
       const fileTypes = ["image/jpeg", "image/jpg", "image/webp"];
       if (!fileTypes.includes(file.type)) {
         setError("Please Upload proper image format(JPEG, JPG, webp)");
-        setUploading(false);
         return false;
       }
 
       if (file.size > 10 * 1024 * 1024) {
         setError("Please Upload image less than 10 MB");
-        setUploading(false);
         return false;
       }
     }
@@ -78,29 +77,25 @@ export default function FileUpload({
         fileName="test-upload"
         useUniqueFileName={true}
         validateFile={validateFile}
+        accept={fileType === "video" ? "video/*" : "image/*"}
         folder={fileType === "video" ? "/video" : "/image"}
         onError={handleError}
-        onSuccess={onSuccess}
+        onSuccess={handleSuccess}
         onUploadProgress={handleProgress}
         onUploadStart={handleUploadStart}
-        transformation={{
-          pre: "l-text,i-Imagekit,fs-50,l-end",
-          post: [
-            {
-              type: "transformation",
-              value: "w-100",
-            },
-          ],
-        }}
-        style={{ display: "none" }} // hide the default input and use the custom upload button
+        className="file-input file-input-primary"
       />
       {uploading && (
         <div className="flex items-center gap-2 p-3">
-          <Loader2 />
+          <Loader2 className="w-4 h-4 animate-spin" />
           <span className="text-center text-green-400">Uploading...</span>
         </div>
       )}
-      {error && <div className="flex items-center gap-2 p-3"><p className="text-red-400">{error}</p></div>}
+      {error && (
+        <div className="flex items-center gap-2 p-3">
+          <p className="text-red-400">{error}</p>
+        </div>
+      )}
     </div>
   );
 }
